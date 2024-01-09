@@ -3,7 +3,6 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 use std::str::FromStr;
 use std::env;
 
-use simple_logger::SimpleLogger;
 use k8s_openapi::api::networking::v1::Ingress;
 
 use kube::{
