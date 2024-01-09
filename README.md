@@ -1,10 +1,10 @@
-# ingress-dns
+# kube-ingress-dns
 
 __Expose your k8s ingress rules via local DNS. A rewrite of [Minikube's ingress-dns addon](https://minikube.sigs.k8s.io/docs/handbook/addons/ingress-dns/), but in rust, and for any cluster (K3s, Microk8s, etc).__
 
 ## Quickstart
 
-1. Install in your cluster (see `./manifest/ingress-dns.yaml`)
+1. Install in your cluster - `kubectl apply -f https://raw.githubusercontent.com/talss89/kube-ingress-dns/main/manifest/ingress-dns.yaml`
 2. Set up your local machine to use the resolver (guide coming soon)
 
 **This is a very early work-in-progress, but I am using this locally on my machine currently. Contributions are very welcome, and encouraged!**
