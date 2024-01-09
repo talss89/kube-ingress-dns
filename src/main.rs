@@ -2,12 +2,12 @@ use std::net::UdpSocket;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::str::FromStr;
 use std::env;
+use simple_logger::SimpleLogger;
 
 use k8s_openapi::api::networking::v1::Ingress;
 
 use kube::{
-    api::{Api, DeleteParams, ListParams, Patch, PatchParams, PostParams, ResourceExt},
-    runtime::wait::{await_condition, conditions::is_pod_running},
+    api::{Api, ListParams},
     Client,
 };
 
