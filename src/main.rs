@@ -4,6 +4,7 @@ use std::str::FromStr;
 use std::env;
 use simple_logger::SimpleLogger;
 
+use simple_logger::SimpleLogger;
 use k8s_openapi::api::networking::v1::Ingress;
 
 use kube::{
@@ -806,6 +807,8 @@ async fn handle_query(socket: &UdpSocket) -> Result<()> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+
+    SimpleLogger::from_env().init().unwrap();
 
     let ifaddr = env::var("POD_IP").unwrap_or("0.0.0.0".to_string());
     let dnsport = env::var("DNS_PORT").unwrap_or("53".to_string());
