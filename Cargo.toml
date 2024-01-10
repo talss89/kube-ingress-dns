@@ -10,3 +10,4 @@ kube = { version = "0.87.2", features = ["runtime", "derive"] }
 k8s-openapi = { version = "0.20.0", features = ["latest"] }
 simple_logger = "4.3.3"
 log = "0.4.20"
+wildmatch = "2.3.0"
