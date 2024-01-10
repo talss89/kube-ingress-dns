@@ -610,7 +610,7 @@ impl DnsRecord {
                 }
             }
             DnsRecord::UNKNOWN { .. } => {
-                println!("Skipping record: {:?}", self);
+                log::warn!("Skipping record: {:?}", self);
             }
         }
 
@@ -703,6 +703,7 @@ async fn search_ingresses(qname: &str) -> Option<Ipv4Addr> {
                     for r in rules.iter() {
                         if let Some(host) = &r.host {
                             if *host == qname.to_string() {
+                                log::info!("Found {} matching {}", ingress.metadata.name?, qname);
                                 return Some(Ipv4Addr::from_str(
                                     ingress.status.as_ref()?.load_balancer.as_ref()?.ingress.as_ref()?[0].ip.as_ref()?
                                 ).ok()?);
@@ -712,7 +713,7 @@ async fn search_ingresses(qname: &str) -> Option<Ipv4Addr> {
                 }
             }
         }
-
+        log::info!("No ingress found for {}", qname);
         None
 } 
 
@@ -728,6 +729,8 @@ async fn lookup(qname: &str, qtype: QueryType) -> Result<DnsPacket> {
                 ttl: 3600
             });
         }
+    } else {
+        log::warn!("Non A query received for {}. Is your local machine set up correctly?", qname);
     }
 
     Ok(packet)
@@ -758,7 +761,7 @@ async fn handle_query(socket: &UdpSocket) -> Result<()> {
 
     // In the normal case, exactly one question is present
     if let Some(question) = request.questions.pop() {
-        println!("Received query: {:?}", question);
+        log::info!("Received query: ({:?}) {}", question.qtype, &question.name);
 
         // Since all is set up and as expected, the query can be forwarded to the
         // target server. There's always the possibility that the query will
@@ -770,15 +773,15 @@ async fn handle_query(socket: &UdpSocket) -> Result<()> {
             packet.header.rescode = result.header.rescode;
 
             for rec in result.answers {
-                println!("Answer: {:?}", rec);
+                log::info!("Answer: {:?}", rec);
                 packet.answers.push(rec);
             }
             for rec in result.authorities {
-                println!("Authority: {:?}", rec);
+                log::info!("Authority: {:?}", rec);
                 packet.authorities.push(rec);
             }
             for rec in result.resources {
-                println!("Resource: {:?}", rec);
+                log::info!("Resource: {:?}", rec);
                 packet.resources.push(rec);
             }
         } else {
@@ -807,10 +810,17 @@ async fn handle_query(socket: &UdpSocket) -> Result<()> {
 #[tokio::main]
 async fn main() -> Result<()> {
 
-    SimpleLogger::from_env().init().unwrap();
+    if env::var("RUST_LOG").is_err() {
+        env::set_var("RUST_LOG", "info")
+    }
+
+    SimpleLogger::new().env().init().unwrap();
 
     let ifaddr = env::var("POD_IP").unwrap_or("0.0.0.0".to_string());
     let dnsport = env::var("DNS_PORT").unwrap_or("53".to_string());
+
+    log::info!("Starting kube-ingress-dns on {}:{}", ifaddr, dnsport);
+
     // Bind an UDP socket on port 53
     let socket = UdpSocket::bind((ifaddr, dnsport.parse::<u16>().unwrap()))?;
 
@@ -819,7 +829,7 @@ async fn main() -> Result<()> {
     loop {
         match handle_query(&socket).await {
             Ok(_) => {}
-            Err(e) => eprintln!("An error occurred: {}", e),
+            Err(e) => log::error!("{}", e),
         }
     }
 }
