@@ -18,11 +18,11 @@ pub async fn resolve_name(qname: &str) -> Option<Ipv4Addr> {
         return Some(addr);
     }
 
-    if let Some(addr) = search_httproutes(qname, &client).await {
+    if let Some(addr) = search_gateways(qname, &client).await {
         return Some(addr);
     }
 
-    if let Some(addr) = search_gateways(qname, &client).await {
+    if let Some(addr) = search_httproutes(qname, &client).await {
         return Some(addr);
     }
 
