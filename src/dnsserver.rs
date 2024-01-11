@@ -1,7 +1,7 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::net::UdpSocket;
 
-use crate::{Result, k8s::search_ingresses};
+use crate::Result;
 
 pub struct BytePacketBuffer {
     pub buf: [u8; 512],
@@ -682,7 +682,7 @@ async fn lookup(qname: &str, qtype: QueryType) -> Result<DnsPacket> {
     
     if let QueryType::A = qtype {
         
-        if let Some(addr) = search_ingresses(qname).await {
+        if let Some(addr) = crate::k8s::resolve_name(qname).await {
             packet.answers.push(DnsRecord::A {
                 domain: qname.to_string(),
                 addr: addr,
