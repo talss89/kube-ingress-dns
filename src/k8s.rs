@@ -22,37 +22,48 @@ pub async fn resolve_name(qname: &str) -> Option<Ipv4Addr> {
         return Some(addr);
     }
 
+    if let Some(addr) = search_gateways(qname, &client).await {
+        return Some(addr);
+    }
+
     None
 }
 
-pub async fn resolve_gateway_ip(name: String, namespace: String, client: &Client) -> Option<Ipv4Addr> {
-    let gateways: Api<Gateway> = Api::namespaced(client.to_owned(), &namespace);
+pub async fn resolve_gateway_ip(gateway: Gateway) -> Option<Ipv4Addr> {
 
-    let gateway = gateways.get(&name).await;
+    let addresses = gateway.status?.addresses?;
 
-    match gateway {
-        Ok(gateway) => {
+    for addr in addresses {
+        if let Ok(ip) = Ipv4Addr::from_str(&addr.value) {
+            return Some(ip);
+        }
+        
+    }
+        
+    None
+}
 
-            let addresses = gateway.status?.addresses?;
+async fn search_gateways(qname: &str, client: &Client) -> Option<Ipv4Addr> {
+    let gateways: Api<Gateway> = Api::all(client.to_owned());
 
-            for addr in addresses {
-                if let Ok(ip) = Ipv4Addr::from_str(&addr.value) {
-                    return Some(ip);
+    let lp = ListParams::default();
+
+    for gateway in gateways.list(&lp).await.ok()? {
+        for listener in &gateway.spec.listeners {
+            if let Some(hostname) = &listener.hostname {
+                if WildMatch::new(&hostname).matches(qname) {
+                    log::info!("Found Gateway {} matching {}", gateway.metadata.name.as_ref()?, qname);
+                    return resolve_gateway_ip(gateway).await;
                 }
-                
             }
         }
-
-        Err(e) => {
-            log::warn!("Could not get Gateway {}: {}", name, e);
-            return None
-        }
-    };
+    }
 
     None
 }
 
 async fn search_httproutes(qname: &str, client: &Client) -> Option<Ipv4Addr> {
+
     let routes: Api<HttpRoute> = Api::all(client.to_owned());
 
     let lp = ListParams::default(); // for this app only
@@ -68,7 +79,12 @@ async fn search_httproutes(qname: &str, client: &Client) -> Option<Ipv4Addr> {
 
                                     if kind == "Gateway" {
                                         log::info!("Found a gateway for {} -> {}", route.metadata.name.as_ref()?, parent.parent_ref.name);
-                                        return resolve_gateway_ip(parent.parent_ref.name, route.metadata.namespace?, client).await;
+
+                                        let gateway = Api::<Gateway>::namespaced(client.to_owned(), route.metadata.namespace.as_ref()?).get(&parent.parent_ref.name).await;
+                                        if let Ok(gateway) = gateway {
+                                            return resolve_gateway_ip(gateway).await;
+                                        }
+                                        
                                     }
                                 }
                             }
