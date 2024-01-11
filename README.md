@@ -7,6 +7,14 @@ __Expose your k8s ingress rules via local DNS. A rewrite of [Minikube's ingress-
 1. Install in your cluster - `kubectl apply -f https://raw.githubusercontent.com/talss89/kube-ingress-dns/main/manifest/ingress-dns.yaml`
 2. Set up your local machine to use the resolver (guide coming soon)
 
+## Feature Status
+
+- [x] Docker images for `linux/amd64` and `linux/arm64`
+- [x] `Ingress` support
+- [x] Gateway API support
+- [ ] Management utility to configure local machine DNS
+
+
 **This is a very early work-in-progress, but I am using this locally on my machine currently. Contributions are very welcome, and encouraged!**
 
 ## Why use this?
