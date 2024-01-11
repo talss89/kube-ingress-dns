@@ -11,3 +11,4 @@ k8s-openapi = { version = "0.20.0", features = ["latest"] }
 simple_logger = "4.3.3"
 log = "0.4.20"
 wildmatch = "2.3.0"
+k8s-gateway-api = "0.15.0"
